@@ -1,0 +1,3 @@
+Pair1:avrora/sim/radio/Medium.__$rr_access$402__$rr__Original_(I)I (Medium.java):52:2 ? Pair1: avrora/sim/radio/Medium.__$rr_access$300__$rr__Original_()D (Medium.java):52:0
+Pair2:avrora/sim/radio/Medium$Receiver.__$rr_intersect__$rr__Original_(JLavrora/sim/radio/Medium$Transmission;)Z (Medium.java):533:11 ? Pair2:avrora/sim/radio/Medium$Transmission.__$rr_end__$rr__Original_()V (Medium.java):616:28
+

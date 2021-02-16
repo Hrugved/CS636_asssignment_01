@@ -58,13 +58,12 @@ public class FTVarState extends VectorClock implements ShadowVar {
 	public volatile String rSourceLocKey;
 	public volatile String wSourceLocKey;
 
-	public volatile boolean accessedByB;
+	public final int delayForA_lowerbound = 0;
+	public volatile int delayForA_upperbound = 6;
+	public final int delayForA_upperbound_min = 2;
 
-	public volatile int delayForA;
-	public volatile int getDelayForA_lower_bound=0; // 2^0 = 1ms
-	public volatile int getDelayForA_upper_bound=7; // 2^7 = 128ms
-	public volatile int getDelayForA_upper_bound_min=2; // if data race is detected, decrease it to 0
 	public volatile int accessesByA = 0;
+	public volatile Boolean accessedByB = false;
 
 	protected FTVarState() {
 	}
@@ -90,36 +89,19 @@ public class FTVarState extends VectorClock implements ShadowVar {
 				super.toString());
 	}
 
-	public synchronized int getDelayForA() {
-		return (1<<updateDelayForA());
-	}
-
-	public synchronized void setDelayForA(int delayForA) {
-		this.delayForA = delayForA;
-	}
-
-	public synchronized int updateDelayForA() {
-		int delay = delayForA;
-		if(delayForA==getDelayForA_upper_bound) {
-			delayForA = getDelayForA_lower_bound;
-			return -1; // Bail out
-		}
-		else delayForA++;
-		return delay;
-	}
-
 	public synchronized void incAccessesByA() {
 		accessesByA++;
-		adaptDelayForA();
+		update_delayForA_upperbound();
+	}
+
+	public synchronized void update_delayForA_upperbound() {
+		if(((accessesByA >> 3) << 3) == accessesByA) { // accessesByA%8 ==0
+			delayForA_upperbound = Math.max(delayForA_upperbound-1,delayForA_upperbound_min);
+		}
 	}
 
 	public synchronized void setDataRaceDetected() {
-		getDelayForA_upper_bound=getDelayForA_upper_bound_min;
+		delayForA_upperbound = delayForA_upperbound_min;
 	}
 
-	public synchronized void adaptDelayForA() {
-		if(((accessesByA >> 3) << 3) == accessesByA) { // accessesByA%8 ==0
-			getDelayForA_upper_bound = Math.max(getDelayForA_upper_bound-1,getDelayForA_upper_bound_min);
-		}
-	}
 }

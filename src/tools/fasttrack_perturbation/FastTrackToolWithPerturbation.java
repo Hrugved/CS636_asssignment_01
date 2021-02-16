@@ -85,12 +85,6 @@ import static java.lang.Integer.min;
 @Abbrev("FT2SS")
 public class FastTrackToolWithPerturbation extends Tool implements BarrierListener<FTBarrierState> {
 
-//        static Decoration<ShadowThread, String> lastR =
-//            ShadowThread.makeDecoration("sourceLoc key of last read",Type.SINGLE, (DefaultValue<ShadowThread, String>) shadowThread -> "");
-//
-//    static Decoration<ShadowThread, String> lastW =
-//            ShadowThread.makeDecoration("sourceLoc key of last write",Type.SINGLE, (DefaultValue<ShadowThread, String>) shadowThread -> "");
-
     private enum racepairType {
         A,
         B
@@ -144,7 +138,7 @@ public class FastTrackToolWithPerturbation extends Tool implements BarrierListen
 
     public FastTrackToolWithPerturbation(final String name, final Tool next, CommandLine commandLine) {
         super(name, next, commandLine);
-        commandLine.add(FastTrackToolWithPerturbation.racepairsFilePath);
+        commandLine.add(racepairsFilePath);
         new BarrierMonitor<FTBarrierState>(this, new DefaultValue<Object, FTBarrierState>() {
             public FTBarrierState get(Object k) {
                 return new FTBarrierState(k, INIT_VECTOR_CLOCK_SIZE);
@@ -332,21 +326,21 @@ public class FastTrackToolWithPerturbation extends Tool implements BarrierListen
 
             if(type== racepairType.A) {
                 sx.incAccessesByA();
-                int delay;
                 boolean bailOut=false;
+                int delay = sx.delayForA_lowerbound;
                 while(!sx.accessedByB) {
-                    delay=sx.getDelayForA();
-                    if(delay!=(1<<-1)) {
+                    if(delay<=sx.delayForA_upperbound) {
+                        Assert.assertTrue(delay<=sx.delayForA_upperbound);
                         try {
-                            Thread.sleep(delay);
+                            Thread.sleep(1<<delay);
                         } catch (InterruptedException e) {
                             Thread.currentThread().interrupt();
-                            System.out.println("interrupted during waiting for access "+key);
                         }
                     } else {
                         bailOut=true;
                         break;
                     }
+                    delay++;
                 }
                 if(!bailOut) sx.accessedByB=false; // reset for new instance for A<->B
             }
